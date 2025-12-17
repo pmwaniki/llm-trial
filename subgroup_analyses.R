@@ -159,15 +159,19 @@ calculate_or_ci <- function(model, base_term,subgroup_name) {
 
 # apply sugroup to age_adult, time_of_day, day_type
 subgroup_analyses=list()
+p_values=list()
 for(subgroup in c("age_adult","time_of_day","day_type",'sentinel_condition')){
   formula=paste0("failure_num~arm*",subgroup,"+(1|clinician_num) + (1|hospital_num)")
   model=glmer(formula,data=outcome_data,family=binomial())
   subgroup_analyses[[subgroup]]=calculate_or_ci(model=model,
     base_term="armIntervention",subgroup_name=subgroup)
+    interaction_term=grep(paste0("armIntervention:",subgroup),names(fixef(model)),value=T)
+    p_values[[subgroup]] <- summary(model)$coefficients[interaction_term, "Pr(>|z|)"]
 }
 
 tab_subgroup<-subgroup_analyses %>%
   bind_rows(.id="subgroup") %>%
+  mutate(p_value=recode(subgroup,!!!p_values)) %>%
   mutate(subgroup=recode(subgroup,'age_adult'="Age group","time_of_day"="Time of Day","day_type"="Day Type","sentinel_condition"="Sentinel Condition")) %>%
   rename("Odds Ratio of treatment failure"=or,"Lower 95% CI"=lower_ci,"Upper 95% CI"=upper_ci) %>%
   mutate_if(is.numeric,round,2) 
@@ -178,9 +182,10 @@ tab_subgroup%>%
 
 
 # forrest plot of subgroup analyses
+tab_subgroup<-tab_subgroup %>%mutate(subgroup2=glue("{subgroup} (p-value={p_value}*)"))
 ggplot(tab_subgroup,aes(y=Level))+
 geom_point(aes(x=`Odds Ratio of treatment failure`),size=3)+
-facet_wrap(.~subgroup,scales="free_y",ncol = 1)+
+facet_wrap(.~subgroup2,scales="free_y",ncol = 1)+
 geom_errorbarh(aes(xmin=`Lower 95% CI`,xmax=`Upper 95% CI`),height=0.1)+
 geom_text(aes(x=12,label=glue("{`Odds Ratio of treatment failure`} [{`Lower 95% CI`}, {`Upper 95% CI`}]")),hjust=.2,size=3)+
 geom_vline(xintercept=1,linetype="dashed")+
