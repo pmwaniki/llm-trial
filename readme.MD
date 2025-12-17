@@ -172,3 +172,44 @@ Notes
 - Requires packages: ordinal (clmm), lme4, gtsummary, gt and tidyverse family.
 - Analyses restrict to single-clinician consultations where specified.
 - Ordinal model OR > 1 indicates higher odds of a more favorable rating in the Intervention arm.
+
+# Sentinel conditions (malnutrition.R, hypertension.R, antimalarials.R, diabetes.R, antibiotics.R)
+
+## Sentinel conditions analyses
+
+Purpose
+- Evaluate diagnosis, testing, referral and treatment for key sentinel conditions: malnutrition, hypertension, malaria (antimalarial prescribing), diabetes, and antibiotic prescribing.
+
+Inputs
+- outcome_data_cleaned.parquet (trial metadata: arm, hospital/clinician ids)
+- Per-condition recode files (saved in RESULTS_FOLDER), e.g.:
+  - "Malnutrition recode - alibayram__medgemma:27b.xlsx"
+  - "Hypertension recode - alibayram__medgemma:27b.xlsx"
+  - "Anti-malarial recode - alibayram__medgemma:27b.xlsx"
+  - "Diabetes recode - alibayram__medgemma:27b.xlsx"
+  - (antibiotics recode file name as in RESULTS_FOLDER)
+
+What each script does (high level)
+- malnutrition.R
+  - Defines malnutrition using documented MUAC/colour flags or WHZ.
+  - Computes identification and referral rates and fits multilevel logistic regression models (hospital and clinician random effects) for referral/identification.
+  - Saves summary tables and model HTML outputs.
+- hypertension.R
+  - Identifies new and chronic hypertension, tabulates treatment for new cases, fits multilevel logistic regression models for incidence and treatment, and saves summaries and model outputs.
+- antimalarials.R
+  - Joins antimalarial prescription recode to trial metadata, computes testing and correctness (e.g., antimalarial prescribed without positive test), and fits multilevel logistic regression for incorrect prescribing.
+  - Saves summary tables and model HTML outputs.
+- diabetes.R
+  - Flags patients at risk, tested, diagnosed, and treated; fits multilevel and logistic models for each stage and saves result pages.
+- antibiotics.R
+  - (Same pattern) Summarises antibiotic prescribing vs diagnosis/testing and fits regression models to assess inappropriate prescribing; saves summaries and model outputs.
+
+Outputs
+- Per-script summary HTMLs and model result HTMLs saved to OUTPUT_FOLDER (see filenames in each script).
+- Typical file examples: "malnutrition_referred_model_results.html", "antimalarial_summary.html", "diabetes_summary.html", etc.
+
+Notes & usage
+- Run scripts individually, e.g.:
+  Rscript malnutrition.R
+- Scripts assume .env is present and exports OUTPUT_FOLDER, DATA_FOLDER, RESULTS_FOLDER.
+- Analyses generally restrict to single‑clinician encounters where appropriate and use glmer for multilevel
