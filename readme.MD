@@ -213,3 +213,29 @@ Notes & usage
   Rscript malnutrition.R
 - Scripts assume .env is present and exports OUTPUT_FOLDER, DATA_FOLDER, RESULTS_FOLDER.
 - Analyses generally restrict to single‑clinician encounters where appropriate and use glmer for multilevel
+
+# LLM cost (LLM_cost.R)
+
+Purpose
+- Estimate and summarise per‑consultation LLM costs (USD) based on token usage recorded for AI consultations.
+
+Inputs
+- ai_consult.parquet (per‑consultation token counts: PromptTokens, CompletionTokens, VisitCode) — expected in DATA_FOLDER.
+- outcome_data_cleaned.parquet (trial metadata: arm, visit_number, n_clinicians) — expected in RESULTS_FOLDER.
+- .env (must set OUTPUT_FOLDER, DATA_FOLDER, RESULTS_FOLDER).
+
+What it does
+- Aggregates PromptTokens and CompletionTokens by VisitCode.
+- Converts tokens to USD using the script's unit rates (PromptTokens * 2.5 / 1e6; CompletionTokens * 10 / 1e6) and computes total_cost per visit.
+- Cleans VisitCode/visit_number to match formats and joins token costs to trial metadata restricted to single‑clinician intervention visits.
+- Produces a density plot of per‑consultation LLM costs and computes summary statistics.
+- Saves a summary HTML table to OUTPUT_FOLDER ("llm_cost_summary.html").
+
+Outputs
+- llm_cost_summary.html (summary table saved to OUTPUT_FOLDER).
+- A density plot is generated in session (can be saved as needed).
+
+Notes & usage
+- Requires packages: tidyverse, ggplot2, arrow, gtsummary, gt, readxl.
+- Run with: Rscript LLM_cost.R or source interactively.
+- Ensure VisitCode formatting in ai_consult.parquet matches visit_number after non‑digit characters are removed.
